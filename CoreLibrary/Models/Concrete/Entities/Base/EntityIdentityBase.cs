@@ -1,4 +1,4 @@
-﻿namespace CoreLibrary.Models.Concrete.Entities;
+﻿namespace CoreLibrary.Models.Concrete.Entities.Base;
 
 public class EntityIdentityBase<TIdentityType>
 {

@@ -1,6 +1,6 @@
 ﻿using System.Data;
 using CoreLibrary.Extensions;
-using CoreLibrary.Models.Concrete.Entities;
+using CoreLibrary.Models.Concrete.Entities.Base;
 using CoreLibrary.Models.Setting;
 using CoreLibrary.Utilities.DataAccess.Dapper.Abstract;
 using Dapper;

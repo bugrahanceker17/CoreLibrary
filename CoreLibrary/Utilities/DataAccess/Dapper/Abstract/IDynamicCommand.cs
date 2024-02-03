@@ -1,5 +1,5 @@
 ﻿using System.Data;
-using CoreLibrary.Models.Concrete.Entities;
+using CoreLibrary.Models.Concrete.Entities.Base;
 
 namespace CoreLibrary.Utilities.DataAccess.Dapper.Abstract;
 

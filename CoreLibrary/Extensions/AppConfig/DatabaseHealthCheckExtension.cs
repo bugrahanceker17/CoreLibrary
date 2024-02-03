@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
-namespace CoreLibrary.Extensions;
+namespace CoreLibrary.Extensions.AppConfig;
 
 public static class DatabaseHealthCheckExtension
 {
