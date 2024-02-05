@@ -1,4 +1,5 @@
 ﻿using System.Data;
+using System.Linq.Expressions;
 using CoreLibrary.Models.Setting;
 using CoreLibrary.Utilities.DataAccess.Dapper.Abstract;
 using Dapper;
@@ -20,6 +21,16 @@ public class DynamicQuery : IDynamicQuery
     public async Task<T> GetAsync<T>(object id)
     {
         return await db.GetAsync<T>(id);
+    }
+
+    public async Task<T> GetByExpressionAsync<T>(Expression<Func<T, bool>> propertyExpression)
+    {
+        return await db.GetAsync<T>(propertyExpression);
+    }
+
+    public async Task<List<T>> GetAllByExpressionAsync<T>(Expression<Func<T, bool>> propertyExpression)
+    {
+        return (await db.GetListAsync<T>(propertyExpression)).ToList();
     }
 
     public async Task<List<T>> GetAllAsync<T>(string whereCondition, object? parameter = null)

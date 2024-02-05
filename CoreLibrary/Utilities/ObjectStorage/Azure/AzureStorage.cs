@@ -1,6 +1,7 @@
 ﻿
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
+using CoreLibrary.Extensions;
 using CoreLibrary.Models.Setting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
@@ -38,7 +39,7 @@ namespace CoreLibrary.Utilities.ObjectStorage.Azure
             return _blobContainerClient.GetBlobs().Any(b => b.Name == fileName);
         }
 
-        public async Task<List<(string fileName, string pathOrContainerName)>> UploadAsync(string containerName, IFormFileCollection files)
+        public async Task<List<(string fileName, string path)>> UploadAsync(string containerName, List<string> imageAsBase64List)
         {
             _blobContainerClient = _blobServiceClient.GetBlobContainerClient(containerName);
             await _blobContainerClient.CreateIfNotExistsAsync();
@@ -46,13 +47,15 @@ namespace CoreLibrary.Utilities.ObjectStorage.Azure
 
             string? baseUrl = _configurationValues.Storage.BasePath;
 
-            List<(string fileName, string pathOrContainerName)> datas = new();
-            foreach (IFormFile file in files)
+            List<(string fileName, string path)> datas = new();
+            foreach (string file in imageAsBase64List)
             {
-                string fileNewName = await FileRenameAsync(containerName, file.Name, HasFile);
+                IFormFile form = await ConvertBase64Generator.Base64ToImage(file);
+                
+                string fileNewName = await FileRenameAsync(containerName, form.Name, HasFile);
 
                 BlobClient blobClient = _blobContainerClient.GetBlobClient(fileNewName);
-                await blobClient.UploadAsync(file.OpenReadStream());
+                await blobClient.UploadAsync(form.OpenReadStream());
                 datas.Add((fileNewName, $"{baseUrl}/{containerName}/{fileNewName}"));
             }
 

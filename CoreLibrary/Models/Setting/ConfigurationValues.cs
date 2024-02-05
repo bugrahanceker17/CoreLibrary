@@ -6,6 +6,7 @@ public class ConfigurationValues
     public Localization Localization { get; set; }
     public Logging Logging { get; set; }
     public PushNotification PushNotification { get; set; }
+    public SendMail SendMail { get; set; }
     public Quartz Quartz { get; set; }
     public Redis Redis { get; set; }
     public Storage Storage { get; set; }
