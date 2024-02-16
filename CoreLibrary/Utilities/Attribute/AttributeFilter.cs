@@ -22,14 +22,12 @@ public class AttributeFilter
         _httpContextAccessor = httpContextAccessor;
         _configurationValues = configurationValues.Value;
     }
-    
+
     public void OnAuthorization(AuthorizationFilterContext context)
     {
-        if (context.ActionDescriptor.EndpointMetadata.Any(em => em is CustomPermissionControlAttribute))
+        if (context.ActionDescriptor.EndpointMetadata.Any(em => em is PermissionControlAttribute))
         {
-            CustomPermissionControlAttribute? customAttribute = context.ActionDescriptor.EndpointMetadata.OfType<CustomPermissionControlAttribute>().FirstOrDefault();
-
-            List<string> permissionParams = customAttribute?.Permissions?.ToList();
+            PermissionControlAttribute? customAttribute = context.ActionDescriptor.EndpointMetadata.OfType<PermissionControlAttribute>().FirstOrDefault();
             bool? loginCheck = customAttribute?.MustLogin;
 
             if (loginCheck.HasValue && loginCheck.Value)
@@ -41,38 +39,54 @@ public class AttributeFilter
                 }
             }
 
-            if (permissionParams != null && permissionParams.Any())
+            HttpContext httpContext = _httpContextAccessor.HttpContext;
+            HttpRequest request = httpContext?.Request;
+
+            string accessToken = request?.Headers["Authorization"].FirstOrDefault();
+
+            if (string.IsNullOrEmpty(accessToken))
+                if (request.Query.TryGetValue("access_token", out StringValues token))
+                    accessToken = $"Bearer {token}";
+
+            List<string> roles = new();
+            List<Claim> claims = null;
+            string userId = string.Empty;
+
+            if (!string.IsNullOrEmpty(accessToken))
             {
-                HttpContext httpContext = _httpContextAccessor.HttpContext;
-                HttpRequest request = httpContext?.Request;
+                if (accessToken.StartsWith("Bearer")) accessToken = accessToken.Replace("Bearer ", "").Replace("\"", "").Trim();
 
-                string accessToken = request?.Headers["Authorization"].FirstOrDefault();
+                JwtSecurityToken securityToken = new JwtSecurityToken(accessToken);
 
-                if (string.IsNullOrEmpty(accessToken))
-                    if (request.Query.TryGetValue("access_token", out StringValues token))
-                        accessToken = $"Bearer {token}";
-
-                List<string> roles = new();
-                List<Claim> claims = null;
-                if (!string.IsNullOrEmpty(accessToken))
+                if (securityToken.Claims.Any())
                 {
-                    if (accessToken.StartsWith("Bearer")) accessToken = accessToken.Replace("Bearer ", "").Replace("\"", "").Trim();
+                    userId = securityToken.Claims.FirstOrDefault(c => c.Type == "nameid")?.Value;
+                    roles = securityToken.Claims.Where(c => c.Type == "sub").ToList().Select(c => c.Value).ToList();
+                }
+            }
 
-                    JwtSecurityToken securityToken = new JwtSecurityToken(accessToken);
-
-                    if (securityToken.Claims.Any())
-                    {
-                        roles = securityToken.Claims.Where(c => c.Type == "sub").ToList().Select(c => c.Value).ToList();
-                    }
+            using (var dbContext = new ApplicationDbContext(_configurationValues.Database.ConnectionString))
+            {
+                if (!string.IsNullOrEmpty(userId))
+                {
+                    Guid gUserId = new Guid(userId);
+                    
+                    AppUser? userControl = dbContext.AppUsers.FirstOrDefault(c => c.Id == gUserId && c.IsDeleted == false && c.IsStatus == true);
+                    
+                    if(userControl is null)
+                        context.Result = new ObjectResult("Kullanıcı bulunamadı!") { StatusCode = 401 };
+                    
                 }
 
-                if (roles.Any())
-                {
-                    List<Guid> guidRoles = new();
-                    roles.ForEach(item => { guidRoles.Add(new Guid(item)); });
+                List<string> permissionParams = customAttribute?.Permissions?.ToList();
 
-                    using (var dbContext = new ApplicationDbContext(_configurationValues.Database.ConnectionString))
+                if (permissionParams != null && permissionParams.Any())
+                {
+                    if (roles.Any())
                     {
+                        List<Guid> guidRoles = new();
+                        roles.ForEach(item => { guidRoles.Add(new Guid(item)); });
+                        
                         List<AppPermissionCorrelation> rolePermissionRelation = dbContext.AppPermissionCorrelations.ToList()
                             .Where(c => guidRoles.Contains(c.RoleId) && c is { IsStatus: true, IsDeleted: false }).ToList();
 
@@ -84,7 +98,7 @@ public class AttributeFilter
 
                         if (permissions.Any(c => allPermissionInRoles.Contains(c)))
                             Console.WriteLine("Yetki kontrolü başarılı !");
-                        
+
                         else
                             context.Result = new ObjectResult("Yetkilendirme başarısız") { StatusCode = 403 };
                     }

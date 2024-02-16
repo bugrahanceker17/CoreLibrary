@@ -18,7 +18,7 @@ namespace CoreLibrary.Utilities.Interceptors
             {
                 invocation.Proceed();
             }
-            catch (Exception e)
+            catch (System.Exception e)
             {
                 isSuccess = false;
                 OnException(invocation, e);

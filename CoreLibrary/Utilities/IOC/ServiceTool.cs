@@ -9,7 +9,6 @@ namespace  CoreLibrary.Utilities.IOC
 
         public static IServiceCollection Create(IServiceCollection services)
         {
-            // ServiceProvider = services.BuildServiceProvider();
             return services;
         }
     }

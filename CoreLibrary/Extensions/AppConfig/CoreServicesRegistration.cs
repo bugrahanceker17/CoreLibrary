@@ -12,6 +12,8 @@ public static class CoreServicesRegistration
 {
     public static void AddCoreServices(this IServiceCollection services)
     {
+        services.AddControllers();
+        
         services.AddHttpContextAccessor();
 
         services.AddDependencyResolvers(new ICoreModule[] { new CoreModule() });

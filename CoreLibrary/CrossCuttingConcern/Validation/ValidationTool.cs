@@ -13,7 +13,6 @@ namespace CoreLibrary.CrossCuttingConcern.Validation
             if (!result.IsValid)
             {
                 throw new ValidationException(result.Errors);
-                // return new DataResult { ErrorMessageList = result.Errors.Select(c => c.ErrorMessage).ToList() };
             }
         }
     }
