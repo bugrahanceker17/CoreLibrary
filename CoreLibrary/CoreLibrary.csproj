@@ -4,6 +4,10 @@
         <TargetFramework>net7.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <PackageId>DevBGRCoreLibrary</PackageId>
+        <Authors>DEVBGR</Authors>
+        <RepositoryUrl>https://github.com/bugrahanceker17/CoreLibrary</RepositoryUrl>
     </PropertyGroup>
 
     <ItemGroup>
@@ -32,5 +36,4 @@
         <PackageReference Include="AspNetCore.HealthChecks.SqlServer" Version="7.0.0" />
         <PackageReference Include="AspNetCore.HealthChecks.UI.Client" Version="7.0.0" />
     </ItemGroup>
-
 </Project>
