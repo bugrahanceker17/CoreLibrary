@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package >
+  <metadata>
+    <id>DevBGRCoreLibrary</id>
+    <version>1.0.0</version>
+    <authors>DEVBGR</authors>
+    <owners>DEVBGR</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description> ?? </description>
+    <releaseNotes>First</releaseNotes>
+  </metadata>
+</package>
