@@ -11,4 +11,5 @@ public class ConfigurationValues
     public Redis Redis { get; set; }
     public Storage Storage { get; set; }
     public TokenOptions TokenOptions { get; set; }
+    public Telegram Telegram { get; set; }
 }

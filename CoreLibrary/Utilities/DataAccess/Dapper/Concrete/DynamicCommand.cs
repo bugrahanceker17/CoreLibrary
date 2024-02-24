@@ -22,7 +22,7 @@ public class DynamicCommand : IDynamicCommand
         db = new SqlConnection(configurationValues.Database.ConnectionString);
     }
 
-    public async Task<(bool succeeded, Guid userId)> AddWithGuidIdentityAsync<T>(T entity) where T : BaseEntity<Guid>
+    public async Task<(bool succeeded, Guid id)> AddWithGuidIdentityAsync<T>(T entity) where T : BaseEntity<Guid>
     {
         string userId = _httpContextAccessor.AccessToken().userId;
 
@@ -44,7 +44,7 @@ public class DynamicCommand : IDynamicCommand
         return await db.InsertAsync<Guid, T>(entity, transaction);
     }
 
-    public async Task<(bool succeeded, TIdentityType userId)> AddAsync<T, TIdentityType>(T entity) where T : BaseEntity<TIdentityType>
+    public async Task<(bool succeeded, TIdentityType id)> AddAsync<T, TIdentityType>(T entity) where T : BaseEntity<TIdentityType>
     {
         TIdentityType result = await db.InsertAsync<TIdentityType, T>(entity);
 

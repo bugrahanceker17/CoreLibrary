@@ -1,29 +1,22 @@
-﻿using System.Data;
-using CoreLibrary.Models.Concrete.Entities;
+﻿using CoreLibrary.Models.Concrete.Entities;
 using CoreLibrary.Models.Concrete.Entities.Auth;
-using CoreLibrary.Models.Setting;
 using CoreLibrary.Utilities.DataAccess.Dapper.Abstract;
 using CoreLibrary.Utilities.Security.Hashing;
 using CoreLibrary.Utilities.Security.JWT;
-using Microsoft.Data.SqlClient;
-using Microsoft.Extensions.Options;
 
 namespace CoreLibrary.Utilities.DataAccess.Dapper.Concrete;
 
 public class AuthOperation : IAuthOperation
 {
-    private readonly IDbConnection db;
     private readonly IDynamicQuery _dynamicQuery;
     private readonly IDynamicCommand _dynamicCommand;
     private readonly ITokenHelper _tokenHelper;
     
-    public AuthOperation(IOptions<ConfigurationValues> configuration, IDynamicQuery dynamicQuery, IDynamicCommand dynamicCommand, ITokenHelper tokenHelper)
+    public AuthOperation(IDynamicQuery dynamicQuery, IDynamicCommand dynamicCommand, ITokenHelper tokenHelper)
     {
         _dynamicQuery = dynamicQuery;
         _dynamicCommand = dynamicCommand;
         _tokenHelper = tokenHelper;
-        ConfigurationValues configurationValues = configuration.Value;
-        db = new SqlConnection(configurationValues.Database.ConnectionString);
     }
     
     public async Task<(bool isSuccess, string message)> Register(RegisterRequest request)
@@ -57,7 +50,7 @@ public class AuthOperation : IAuthOperation
             PasswordHash = passwordHash
         };
 
-        (bool succeeded, Guid userId) insertUser = await _dynamicCommand.AddWithGuidIdentityAsync(user);
+        (bool succeeded, Guid id) insertUser = await _dynamicCommand.AddWithGuidIdentityAsync(user);
 
         if (!insertUser.succeeded)
             return (false, "");
@@ -70,10 +63,10 @@ public class AuthOperation : IAuthOperation
                 IsDeleted = false,
                 IsStatus = true,
                 RoleId = request.RoleId.Value,
-                UserId = insertUser.userId
+                UserId = insertUser.id
             };
             
-            (bool succeeded, Guid userId) insertUserRole = await _dynamicCommand.AddWithGuidIdentityAsync(userRole);
+            (bool succeeded, Guid id) insertUserRole = await _dynamicCommand.AddWithGuidIdentityAsync(userRole);
 
             if (!insertUserRole.succeeded)
                 return (false, "");
@@ -102,6 +95,11 @@ public class AuthOperation : IAuthOperation
         
         if(string.IsNullOrEmpty(token.Token))
             return (false, "", "");
+
+        await _dynamicCommand.AddWithGuidIdentityAsync(new AppLoginLog
+        {
+            Description = $"User [{user.FirstName} {user.LastName}] logged in on [{DateTime.Now:dd/MM/yyyy HH:mm:ss}]"
+        });
 
         return (true, "", token.Token);
     }
