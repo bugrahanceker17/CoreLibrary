@@ -10,13 +10,16 @@ public static class DatabaseHealthCheckExtension
 {
     public static void DbHealthCheckConfigure(this IServiceCollection services, string connectionString)
     {
+        if (!string.IsNullOrEmpty(connectionString))
+        {
             services.AddHealthChecks()
-            .AddSqlServer(
-                connectionString: connectionString,
-                healthQuery: "SELECT 1",
-                name: "MS SQL Server Check",
-                failureStatus: HealthStatus.Unhealthy | HealthStatus.Degraded,
-                tags: new string[] { "db", "sql", "sqlserver" });
+                .AddSqlServer(
+                    connectionString: connectionString,
+                    healthQuery: "SELECT 1",
+                    name: "MS SQL Server Check",
+                    failureStatus: HealthStatus.Unhealthy | HealthStatus.Degraded,
+                    tags: new string[] { "db", "sql", "sqlserver" });   
+        }
     }
 
     public static void DbHealthCheckRegister(this IApplicationBuilder app)
