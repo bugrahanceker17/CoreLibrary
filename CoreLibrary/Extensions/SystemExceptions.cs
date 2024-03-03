@@ -2,7 +2,7 @@
 
 public static class SystemExceptions
 {
-    public static bool GuidIsNullOrEmpty(this Guid input)
+    public static bool GuidIsNullOrEmpty(this Guid? input)
     {
         if (input == null || input.Equals(Guid.Empty))
             return true;

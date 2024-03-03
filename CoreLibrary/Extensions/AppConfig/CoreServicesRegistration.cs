@@ -1,6 +1,6 @@
 ﻿using CoreLibrary.Aspects.DependencyResolves;
-using CoreLibrary.Utilities.DataAccess.Dapper.Abstract;
-using CoreLibrary.Utilities.DataAccess.Dapper.Concrete;
+using CoreLibrary.Utilities.DataAccess.Operation.Dapper.Abstract;
+using CoreLibrary.Utilities.DataAccess.Operation.Dapper.Concrete;
 using CoreLibrary.Utilities.IOC;
 using CoreLibrary.Utilities.MailSender;
 using CoreLibrary.Utilities.Security.JWT;
