@@ -1,34 +1,35 @@
 ﻿using CoreLibrary.Extensions;
 using CoreLibrary.Models.Concrete.Entities;
 using CoreLibrary.Models.Concrete.Entities.Auth;
-using CoreLibrary.Utilities.DataAccess.Operation.Dapper.Abstract;
+using CoreLibrary.Utilities.DataAccess.Operation.Abstract;
+using CoreLibrary.Utilities.DataAccess.Operation.EntityFramework.Abstract;
 using CoreLibrary.Utilities.Security.Hashing;
 using CoreLibrary.Utilities.Security.JWT;
 
-namespace CoreLibrary.Utilities.DataAccess.Operation.Dapper.Concrete;
+namespace CoreLibrary.Utilities.DataAccess.Operation.EntityFramework.Concrete;
 
-public class AuthOperation : IAuthOperation
+public class EfAuthOperation : IEfAuthOperation
 {
-    private readonly IDynamicQuery _dynamicQuery;
-    private readonly IDynamicCommand _dynamicCommand;
+    private readonly IEfDynamicBaseQuery _dynamicBaseQuery;
+    private readonly IEfDynamicBaseCommand _dynamicBaseCommand;
     private readonly ITokenHelper _tokenHelper;
     
-    public AuthOperation(IDynamicQuery dynamicQuery, IDynamicCommand dynamicCommand, ITokenHelper tokenHelper)
+    public EfAuthOperation(IEfDynamicBaseQuery dynamicBaseQuery, IEfDynamicBaseCommand dynamicBaseCommand, ITokenHelper tokenHelper)
     {
-        _dynamicQuery = dynamicQuery;
-        _dynamicCommand = dynamicCommand;
+        _dynamicBaseQuery = dynamicBaseQuery;
+        _dynamicBaseCommand = dynamicBaseCommand;
         _tokenHelper = tokenHelper;
     }
     
     public async Task<(bool isSuccess, string message)> Register(RegisterRequest request)
     {
-        AppUser userExists = await _dynamicQuery.GetByExpressionAsync<AppUser>(c => 
+        AppUser userExists = await _dynamicBaseQuery.GetByExpressionAsync<AppUser>(c => 
             c.UserName == request.UserName || 
             c.Email == request.Email || 
             c.PhoneNumber == request.PhoneNumber
             );
 
-        if (userExists is not null)
+        if (userExists is not null && userExists.Id != Guid.Empty)
             return (false, "");
         
         byte[] passwordHash, passwordSalt;
@@ -51,12 +52,12 @@ public class AuthOperation : IAuthOperation
             PasswordHash = passwordHash
         };
 
-        (bool succeeded, Guid id) insertUser = await _dynamicCommand.AddWithGuidIdentityAsync(user);
+        (bool succeeded, Guid id) insertUser = await _dynamicBaseCommand.AddWithGuidIdentityAsync(user);
 
         if (!insertUser.succeeded)
             return (false, "");
 
-        if (request.RoleId.GuidIsNullOrEmpty())
+        if (!request.RoleId.GuidIsNullOrEmpty())
         {
             AppUserRole userRole = new AppUserRole
             {
@@ -64,7 +65,7 @@ public class AuthOperation : IAuthOperation
                 UserId = insertUser.id
             };
             
-            (bool succeeded, Guid id) insertUserRole = await _dynamicCommand.AddWithGuidIdentityAsync(userRole);
+            (bool succeeded, Guid id) insertUserRole = await _dynamicBaseCommand.AddWithGuidIdentityAsync(userRole);
 
             if (!insertUserRole.succeeded)
                 return (false, "");
@@ -76,12 +77,12 @@ public class AuthOperation : IAuthOperation
 
     public async Task<(bool isSuccess, string error, string accessToken)> LogIn(LoginRequest request)
     {
-        AppUser user = await _dynamicQuery.GetByExpressionAsync<AppUser>(c => c.UserName.Equals(request.Value) || c.Email.Equals(request.Value));
+        AppUser user = await _dynamicBaseQuery.GetByExpressionAsync<AppUser>(c => c.UserName.Equals(request.Value) || c.Email.Equals(request.Value));
 
-        if (user is not null)
+        if (user is null)
             return (false, "", "");
 
-        List<AppUserRole>? userRole = await _dynamicQuery.GetAllByExpressionAsync<AppUserRole>(c => c.UserId.Equals(user.Id));
+        List<AppUserRole>? userRole = await _dynamicBaseQuery.GetAllByExpressionAsync<AppUserRole>(c => c.UserId == user.Id);
         
         if (!userRole.Any())
             return (false, "", "");
@@ -94,7 +95,7 @@ public class AuthOperation : IAuthOperation
         if(string.IsNullOrEmpty(token.Token))
             return (false, "", "");
 
-        await _dynamicCommand.AddWithGuidIdentityAsync(new AppLoginLog
+        await _dynamicBaseCommand.AddWithGuidIdentityAsync(new AppLoginLog
         {
             Description = $"User [{user.FirstName} {user.LastName}] logged in on [{DateTime.Now:dd/MM/yyyy HH:mm:ss}]"
         });

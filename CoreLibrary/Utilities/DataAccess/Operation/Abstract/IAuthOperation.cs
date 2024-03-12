@@ -1,6 +1,6 @@
 ﻿using CoreLibrary.Models.Concrete.Entities.Auth;
 
-namespace CoreLibrary.Utilities.DataAccess.Operation.Dapper.Abstract;
+namespace CoreLibrary.Utilities.DataAccess.Operation.Abstract;
 
 public interface IAuthOperation
 {

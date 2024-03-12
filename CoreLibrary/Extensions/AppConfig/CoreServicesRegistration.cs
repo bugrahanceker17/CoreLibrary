@@ -1,17 +1,20 @@
 ﻿using CoreLibrary.Aspects.DependencyResolves;
 using CoreLibrary.Utilities.DataAccess.Operation.Dapper.Abstract;
 using CoreLibrary.Utilities.DataAccess.Operation.Dapper.Concrete;
+using CoreLibrary.Utilities.DataAccess.Operation.EntityFramework.Abstract;
+using CoreLibrary.Utilities.DataAccess.Operation.EntityFramework.Concrete;
 using CoreLibrary.Utilities.IOC;
 using CoreLibrary.Utilities.MailSender;
 using CoreLibrary.Utilities.Security.JWT;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace CoreLibrary.Extensions.AppConfig;
 
-public static class CoreServicesRegistration
+public static class CoreServicesRegistration 
 {
     public static void AddCoreServices(this IServiceCollection services)
     {
@@ -35,11 +38,16 @@ public static class CoreServicesRegistration
                 .AllowAnyMethod()
                 .AllowAnyOrigin())
             );
-        
-        services.AddSingleton<IDynamicQuery, DynamicQuery>();
+
         services.AddSingleton<ITokenHelper, JwtHelper>();
-        services.AddSingleton<IDynamicCommand, DynamicCommand>();
         services.AddSingleton<IMailSender, MailSender>();
-        services.AddSingleton<IAuthOperation, AuthOperation>();
+        
+        services.AddTransient<IEfDynamicBaseCommand, EfDynamicBaseCommand>();
+        services.AddTransient<IEfDynamicBaseQuery, EfDynamicBaseQuery>();
+        services.AddTransient<IEfAuthOperation, EfAuthOperation>();
+        
+        services.AddTransient<IDapperAuthOperation, DapperAuthOperation>();
+        services.AddTransient<IDapperDynamicBaseCommand, DapperDynamicBaseCommand>();
+        services.AddTransient<IDapperDynamicBaseQuery, DapperDynamicBaseQuery>();
     }
 }

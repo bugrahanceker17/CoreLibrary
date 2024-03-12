@@ -8,7 +8,7 @@
         <PackageId>DevBGRCoreLibrary</PackageId>
         <Authors>DEVBGR</Authors>
         <RepositoryUrl>https://github.com/bugrahanceker17/CoreLibrary</RepositoryUrl>
-        <Version>1.0.3</Version>
+        <Version>1.0.9</Version>
     </PropertyGroup>
 
     <ItemGroup>
@@ -36,9 +36,5 @@
         <PackageReference Include="AspNetCore.HealthChecks.SqlServer" Version="7.0.0" />
         <PackageReference Include="AspNetCore.HealthChecks.UI.Client" Version="7.0.0" />
         <PackageReference Include="Telegram.Bot" Version="16.0.2" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Utilities\DataAccess\Operation\" />
     </ItemGroup>
 </Project>

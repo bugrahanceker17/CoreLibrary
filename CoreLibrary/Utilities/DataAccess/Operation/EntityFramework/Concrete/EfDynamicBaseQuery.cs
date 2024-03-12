@@ -1,49 +1,44 @@
 ﻿using System.Data;
 using System.Linq.Expressions;
 using CoreLibrary.Models.Setting;
-using CoreLibrary.Utilities.DataAccess.Operation.Dapper.Abstract;
+using CoreLibrary.Utilities.DataAccess.Operation.EntityFramework.Abstract;
 using Dapper;
 using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
-namespace CoreLibrary.Utilities.DataAccess.Operation.Dapper.Concrete;
+namespace CoreLibrary.Utilities.DataAccess.Operation.EntityFramework.Concrete;
 
-public class DynamicQuery : IDynamicQuery
+public class EfDynamicBaseQuery : IEfDynamicBaseQuery
 {
     private readonly IDbConnection db;
+    private readonly DbContext _context;
 
-    public DynamicQuery(IOptions<ConfigurationValues> configuration)
+    public EfDynamicBaseQuery(IOptions<ConfigurationValues> configuration, DbContext context)
     {
+        _context = context;
         ConfigurationValues configurationValues = configuration.Value;
         db = new SqlConnection(configurationValues.Database.ConnectionString);
     }
 
     public async Task<T> GetAsync<T>(object id)
     {
-        return await db.GetAsync<T>(id);
+        throw new NotImplementedException();
     }
 
-    public async Task<T> GetByExpressionAsync<T>(Expression<Func<T, bool>> propertyExpression)
+    public async Task<T?> GetByExpressionAsync<T>(Expression<Func<T, bool>> propertyExpression) where T : class
     {
-        return await db.GetAsync<T>(propertyExpression);
+        return await _context.Set<T>().SingleOrDefaultAsync(propertyExpression);
     }
 
-    public async Task<List<T>> GetAllByExpressionAsync<T>(Expression<Func<T, bool>> propertyExpression)
+    public async Task<List<TEntity>> GetAllByExpressionAsync<TEntity>(Expression<Func<TEntity, bool>> propertyExpression = null) where TEntity : class
     {
-        return (await db.GetListAsync<T>(propertyExpression)).ToList();
+        return propertyExpression == null ? _context.Set<TEntity>().ToList() : _context.Set<TEntity>().Where(propertyExpression).ToList();
     }
 
-    public async Task<List<T>> GetAllAsync<T>(string whereCondition, object? parameter = null)
+    public async Task<List<T>> GetAllAsync<T>(string whereCondition, object? parameter = null) where T : class
     {
-        string def = "WHERE IsStatus = 1 AND IsDeleted = 0";
-
-        string baseWhereCondition = string.IsNullOrEmpty(whereCondition)
-            ? def
-            : whereCondition.Contains("WHERE ")
-                ? whereCondition
-                : $"WHERE {whereCondition} ";
-
-        return (await db.GetListAsync<T>(baseWhereCondition, parameter)).ToList();
+        return _context.Set<T>().ToList();
     }
 
     public async Task<(List<T> record, int count)> GetAllByPaginationAsync<T>(int page, int pageSize, string whereCondition, string orderBy)

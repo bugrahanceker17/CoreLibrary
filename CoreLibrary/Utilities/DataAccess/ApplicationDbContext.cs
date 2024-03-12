@@ -10,11 +10,13 @@ public class ApplicationDbContext : DbContext
     {
         _connectionString = connectionString;
     }
-    
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        optionsBuilder.EnableSensitiveDataLogging(true);
         optionsBuilder.UseSqlServer(_connectionString);
+        optionsBuilder.LogTo(Console.WriteLine);
+        optionsBuilder.EnableSensitiveDataLogging(true);
+        optionsBuilder.EnableDetailedErrors();
     }
 
     public DbSet<AppUser> AppUsers { get; set; }

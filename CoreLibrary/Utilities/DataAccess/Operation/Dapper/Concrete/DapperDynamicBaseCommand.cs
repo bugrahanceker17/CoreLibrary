@@ -10,12 +10,12 @@ using Microsoft.Extensions.Options;
 
 namespace CoreLibrary.Utilities.DataAccess.Operation.Dapper.Concrete;
 
-public class DynamicCommand : IDynamicCommand
+public class DapperDynamicBaseCommand : IDapperDynamicBaseCommand
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IDbConnection db;
 
-    public DynamicCommand(IOptions<ConfigurationValues> configuration, IHttpContextAccessor httpContextAccessor)
+    public DapperDynamicBaseCommand(IOptions<ConfigurationValues> configuration, IHttpContextAccessor httpContextAccessor)
     {
         _httpContextAccessor = httpContextAccessor;
         ConfigurationValues configurationValues = configuration.Value;
@@ -68,9 +68,20 @@ public class DynamicCommand : IDynamicCommand
         await db.UpdateAsync(entity, transaction);
     }
 
-    public async Task<int> HardDeleteAsync<T>(int id)
+    public async Task<int> HardDeleteAsync<T>(T entity) where T : class
     {
-        int? result = await db.DeleteAsync<T>(id);
+        int? result = await db.DeleteAsync(entity);
+        return result.GetValueOrDefault();
+    }
+
+    public async Task<int> Passive<T>(T entity) where T : BaseEntity<Guid>
+    {
+        entity.IsDeleted = true;
+        entity.IsStatus = false;
+        entity.UpdatedAt = DateTime.Now;
+        entity.UpdatedBy = string.IsNullOrEmpty(_httpContextAccessor.AccessToken().userId) ? null : _httpContextAccessor.AccessToken().userId;
+
+        int? result = await db.UpdateAsync(entity);
         return result.GetValueOrDefault();
     }
 

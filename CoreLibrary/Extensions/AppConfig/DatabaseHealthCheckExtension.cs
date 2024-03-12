@@ -1,4 +1,5 @@
-﻿using HealthChecks.UI.Client;
+﻿using CoreLibrary.Models.Setting;
+using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.DependencyInjection;
