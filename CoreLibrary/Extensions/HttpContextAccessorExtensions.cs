@@ -10,14 +10,14 @@ namespace CoreLibrary.Extensions
 {
     public static class HttpContextAccessorExtensions
     {
-        public static (bool login, string text, string userId) LoginExists(this IHttpContextAccessor httpContextAccessor, List<string> role)
+        public static (bool login, string text, string userId) LoginExists(this IHttpContextAccessor httpContextAccessor, params string[] role)
         {
            (string accessToken, string userId, List<Claim> claims, string role, long expireTime) accessTokenData = httpContextAccessor.AccessToken();
 
            if (string.IsNullOrEmpty(accessTokenData.userId))
                 return (false, "Giriş yapılmadı", accessTokenData.userId);
 
-           if (!role.Contains(accessTokenData.role))
+           if (role.Any() && !role.Contains(accessTokenData.role))
                 return (false, "Bu işlem için yetkiniz bulunmamaktadır", accessTokenData.userId);
 
            return (true, string.Empty, accessTokenData.userId);

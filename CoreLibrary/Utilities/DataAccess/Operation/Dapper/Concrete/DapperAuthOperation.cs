@@ -1,9 +1,7 @@
 ﻿using CoreLibrary.Extensions;
 using CoreLibrary.Models.Concrete.Entities;
-using CoreLibrary.Models.Concrete.Entities.Auth;
-using CoreLibrary.Utilities.DataAccess.Operation.Abstract;
+using CoreLibrary.Models.Concrete.DataTransferObjects;
 using CoreLibrary.Utilities.DataAccess.Operation.Dapper.Abstract;
-using CoreLibrary.Utilities.DataAccess.Operation.EntityFramework.Abstract;
 using CoreLibrary.Utilities.Security.Hashing;
 using CoreLibrary.Utilities.Security.JWT;
 
@@ -11,18 +9,18 @@ namespace CoreLibrary.Utilities.DataAccess.Operation.Dapper.Concrete;
 
 public class DapperAuthOperation : IDapperAuthOperation
 {
-    private readonly IEfDynamicBaseQuery _dynamicBaseQuery;
-    private readonly IEfDynamicBaseCommand _dynamicBaseCommand;
+    private readonly IDapperDynamicBaseQuery _dynamicBaseQuery;
+    private readonly IDapperDynamicBaseCommand _dynamicBaseCommand;
     private readonly ITokenHelper _tokenHelper;
     
-    public DapperAuthOperation(IEfDynamicBaseQuery dynamicBaseQuery, IEfDynamicBaseCommand dynamicBaseCommand, ITokenHelper tokenHelper)
+    public DapperAuthOperation(IDapperDynamicBaseQuery dynamicBaseQuery, IDapperDynamicBaseCommand dynamicBaseCommand, ITokenHelper tokenHelper)
     {
         _dynamicBaseQuery = dynamicBaseQuery;
         _dynamicBaseCommand = dynamicBaseCommand;
         _tokenHelper = tokenHelper;
     }
     
-    public async Task<(bool isSuccess, string message)> Register(RegisterRequest request)
+    public async Task<RegisterResponse> Register(RegisterRequest request)
     {
         AppUser userExists = await _dynamicBaseQuery.GetByExpressionAsync<AppUser>(c => 
             c.UserName == request.UserName || 
@@ -31,7 +29,7 @@ public class DapperAuthOperation : IDapperAuthOperation
             );
 
         if (userExists is not null && userExists.Id != Guid.Empty)
-            return (false, "");
+            return new RegisterResponse { IsSuccess = false };
         
         byte[] passwordHash, passwordSalt;
         HashingHelper.CreatePasswordHash(request.Password, out passwordHash, out passwordSalt);
@@ -56,7 +54,7 @@ public class DapperAuthOperation : IDapperAuthOperation
         (bool succeeded, Guid id) insertUser = await _dynamicBaseCommand.AddWithGuidIdentityAsync(user);
 
         if (!insertUser.succeeded)
-            return (false, "");
+            return new RegisterResponse { IsSuccess = false };
 
         if (!request.RoleId.GuidIsNullOrEmpty())
         {
@@ -69,38 +67,66 @@ public class DapperAuthOperation : IDapperAuthOperation
             (bool succeeded, Guid id) insertUserRole = await _dynamicBaseCommand.AddWithGuidIdentityAsync(userRole);
 
             if (!insertUserRole.succeeded)
-                return (false, "");
+                return new RegisterResponse { IsSuccess = false };
             
         }
 
-        return (true, "");
+        return new RegisterResponse { IsSuccess = true };
     }
 
-    public async Task<(bool isSuccess, string error, string accessToken)> LogIn(LoginRequest request)
+    public async Task<LoginResponse> LogIn(LoginRequest request)
     {
         AppUser user = await _dynamicBaseQuery.GetByExpressionAsync<AppUser>(c => c.UserName.Equals(request.Value) || c.Email.Equals(request.Value));
 
         if (user is null)
-            return (false, "", "");
+            return new LoginResponse { IsSuccess = false };
 
         List<AppUserRole>? userRole = await _dynamicBaseQuery.GetAllByExpressionAsync<AppUserRole>(c => c.UserId == user.Id);
         
         if (!userRole.Any())
-            return (false, "", "");
+            return new LoginResponse { IsSuccess = false };
         
         if (!HashingHelper.VerifyPasswordHash(request.Password, user!.PasswordHash, user.PasswordSalt))
-            return (false, "", "");
+            return new LoginResponse { IsSuccess = false };
         
         AccessToken token = _tokenHelper.CreateToken(user, userRole.Select(c=>c.RoleId.ToString()).ToList());
         
         if(string.IsNullOrEmpty(token.Token))
-            return (false, "", "");
+            return new LoginResponse { IsSuccess = false };
 
         await _dynamicBaseCommand.AddWithGuidIdentityAsync(new AppLoginLog
         {
             Description = $"User [{user.FirstName} {user.LastName}] logged in on [{DateTime.Now:dd/MM/yyyy HH:mm:ss}]"
         });
 
-        return (true, "", token.Token);
+        return new LoginResponse { IsSuccess = true, AccessToken = token.Token, User = user};
+    }
+
+    public async Task<(bool isSuccess, string message)> UpdatePassword(UpdatePasswordRequest request)
+    {
+        AppUser? appUser = await _dynamicBaseQuery.GetAsync<AppUser>(request.UserId);
+
+        if (appUser is null)
+            return (false, "");
+
+        if (!request.OldPassword.Equals(request.OldPasswordCheck))
+            return (false, "");
+
+        if (!HashingHelper.VerifyPasswordHash(request.OldPassword, appUser.PasswordHash, appUser.PasswordSalt))
+            return (false, "");
+        
+        byte[] passwordHash, passwordSalt;
+        HashingHelper.CreatePasswordHash(request.NewPassword, out passwordHash, out passwordSalt);
+
+
+        appUser.PasswordSalt = passwordSalt;
+        appUser.PasswordHash = passwordHash;
+
+        int result = await _dynamicBaseCommand.UpdateAsync(appUser);
+
+        if (result.LessOrEqualToZero())
+            return (false, "");
+        
+        return (true, "");
     }
 }

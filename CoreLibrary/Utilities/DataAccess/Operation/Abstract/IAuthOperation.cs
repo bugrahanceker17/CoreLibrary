@@ -1,9 +1,10 @@
-﻿using CoreLibrary.Models.Concrete.Entities.Auth;
+﻿using CoreLibrary.Models.Concrete.DataTransferObjects;
 
 namespace CoreLibrary.Utilities.DataAccess.Operation.Abstract;
 
 public interface IAuthOperation
 {
-    Task<(bool isSuccess, string message)> Register(RegisterRequest request);
-    Task<(bool isSuccess, string error, string accessToken)> LogIn(LoginRequest request);
+    Task<RegisterResponse> Register(RegisterRequest request);
+    Task<LoginResponse> LogIn(LoginRequest request);
+    Task<(bool isSuccess, string message)> UpdatePassword(UpdatePasswordRequest request);
 }

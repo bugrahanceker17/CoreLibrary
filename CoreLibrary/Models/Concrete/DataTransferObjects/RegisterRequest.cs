@@ -1,6 +1,8 @@
-﻿namespace CoreLibrary.Models.Concrete.Entities.Auth;
+﻿using CoreLibrary.Models.Abstract;
 
-public class RegisterRequest
+namespace CoreLibrary.Models.Concrete.DataTransferObjects;
+
+public class RegisterRequest : IRequest
 {
     public string FirstName { get; set; }
     public string LastName { get; set; }
