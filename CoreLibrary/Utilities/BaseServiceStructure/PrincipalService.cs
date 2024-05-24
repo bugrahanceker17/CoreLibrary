@@ -1,5 +1,6 @@
 ﻿using CoreLibrary.Extensions;
 using CoreLibrary.Utilities.DataAccess.Operation.EntityFramework.Abstract;
+using CoreLibrary.Utilities.Result;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -37,4 +38,6 @@ public abstract class PrincipalService
     {
         get { return _authOperation ??= this._serviceProvider.GetRequiredService<IEfAuthOperation>(); }
     }
+
+    public static DataResult ThrowDataResultError(string message) => new() { ErrorMessageList = new List<string>() { message } };
 }
