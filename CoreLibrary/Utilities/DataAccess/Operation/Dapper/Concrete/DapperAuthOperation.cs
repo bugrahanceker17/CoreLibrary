@@ -4,6 +4,7 @@ using CoreLibrary.Models.Concrete.DataTransferObjects;
 using CoreLibrary.Utilities.DataAccess.Operation.Dapper.Abstract;
 using CoreLibrary.Utilities.Security.Hashing;
 using CoreLibrary.Utilities.Security.JWT;
+using Microsoft.AspNetCore.Http;
 
 namespace CoreLibrary.Utilities.DataAccess.Operation.Dapper.Concrete;
 
@@ -12,12 +13,14 @@ public class DapperAuthOperation : IDapperAuthOperation
     private readonly IDapperDynamicBaseQuery _dynamicBaseQuery;
     private readonly IDapperDynamicBaseCommand _dynamicBaseCommand;
     private readonly ITokenHelper _tokenHelper;
+    private readonly IHttpContextAccessor _httpContextAccessor;
     
-    public DapperAuthOperation(IDapperDynamicBaseQuery dynamicBaseQuery, IDapperDynamicBaseCommand dynamicBaseCommand, ITokenHelper tokenHelper)
+    public DapperAuthOperation(IDapperDynamicBaseQuery dynamicBaseQuery, IDapperDynamicBaseCommand dynamicBaseCommand, ITokenHelper tokenHelper, IHttpContextAccessor httpContextAccessor)
     {
         _dynamicBaseQuery = dynamicBaseQuery;
         _dynamicBaseCommand = dynamicBaseCommand;
         _tokenHelper = tokenHelper;
+        _httpContextAccessor = httpContextAccessor;
     }
     
     public async Task<RegisterResponse> Register(RegisterRequest request)
@@ -128,5 +131,15 @@ public class DapperAuthOperation : IDapperAuthOperation
             return (false, "");
         
         return (true, "");
+    }
+
+    public bool LoginExists()
+    {
+        return !string.IsNullOrEmpty(_httpContextAccessor.AccessToken().accessToken);
+    }
+
+    public Guid UserId()
+    {
+        return string.IsNullOrEmpty(_httpContextAccessor.AccessToken().userId) ? Guid.Empty : new Guid(_httpContextAccessor.AccessToken().userId);
     }
 }

@@ -12,7 +12,7 @@ using Microsoft.Extensions.Primitives;
 
 namespace CoreLibrary.Utilities.Attribute;
 
-public class AttributeFilter
+public class AttributeFilter : IAuthorizationFilter
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly ConfigurationValues _configurationValues;
@@ -25,9 +25,9 @@ public class AttributeFilter
 
     public void OnAuthorization(AuthorizationFilterContext context)
     {
-        if (context.ActionDescriptor.EndpointMetadata.Any(em => em is PermissionControlAttribute))
+        if (context.ActionDescriptor.EndpointMetadata.Any(em => em is AuthorizationControlAttribute))
         {
-            PermissionControlAttribute? customAttribute = context.ActionDescriptor.EndpointMetadata.OfType<PermissionControlAttribute>().FirstOrDefault();
+            AuthorizationControlAttribute? customAttribute = context.ActionDescriptor.EndpointMetadata.OfType<AuthorizationControlAttribute>().FirstOrDefault();
             bool? loginCheck = customAttribute?.MustLogin;
 
             if (loginCheck.HasValue && loginCheck.Value)

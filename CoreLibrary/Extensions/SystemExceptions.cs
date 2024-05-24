@@ -25,4 +25,19 @@ public static class SystemExceptions
 
         return false;
     }
+    
+    public static List<T> AsPaginationList<T>(this IQueryable<T> data, int page, int pageSize)
+    {
+        if (page < 1)
+        {
+            throw new ArgumentException("Sayfa numarası 1'den küçük olamaz.", nameof(page));
+        }
+
+        if (pageSize < 1)
+        {
+            throw new ArgumentException("Sayfa boyutu 1'den küçük olamaz.", nameof(pageSize));
+        }
+
+        return data.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+    }
 }

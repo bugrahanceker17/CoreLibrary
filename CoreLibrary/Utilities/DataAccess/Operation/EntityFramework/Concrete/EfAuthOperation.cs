@@ -4,6 +4,7 @@ using CoreLibrary.Models.Concrete.DataTransferObjects;
 using CoreLibrary.Utilities.DataAccess.Operation.EntityFramework.Abstract;
 using CoreLibrary.Utilities.Security.Hashing;
 using CoreLibrary.Utilities.Security.JWT;
+using Microsoft.AspNetCore.Http;
 
 namespace CoreLibrary.Utilities.DataAccess.Operation.EntityFramework.Concrete;
 
@@ -12,17 +13,19 @@ public class EfAuthOperation : IEfAuthOperation
     private readonly IEfDynamicBaseQuery _dynamicBaseQuery;
     private readonly IEfDynamicBaseCommand _dynamicBaseCommand;
     private readonly ITokenHelper _tokenHelper;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public EfAuthOperation(IEfDynamicBaseQuery dynamicBaseQuery, IEfDynamicBaseCommand dynamicBaseCommand, ITokenHelper tokenHelper)
+    public EfAuthOperation(IEfDynamicBaseQuery dynamicBaseQuery, IEfDynamicBaseCommand dynamicBaseCommand, ITokenHelper tokenHelper, IHttpContextAccessor httpContextAccessor)
     {
         _dynamicBaseQuery = dynamicBaseQuery;
         _dynamicBaseCommand = dynamicBaseCommand;
         _tokenHelper = tokenHelper;
+        _httpContextAccessor = httpContextAccessor;
     }
 
     public async Task<RegisterResponse> Register(RegisterRequest request)
     {
-        AppUser userExists = await _dynamicBaseQuery.GetByExpressionAsync<AppUser>(c =>
+        AppUser? userExists = await _dynamicBaseQuery.GetByExpressionAsync<AppUser>(c =>
             c.UserName == request.UserName ||
             c.Email == request.Email ||
             c.PhoneNumber == request.PhoneNumber
@@ -56,6 +59,7 @@ public class EfAuthOperation : IEfAuthOperation
         if (!insertUser.succeeded)
             return new RegisterResponse { IsSuccess = false };
 
+
         if (!request.RoleId.GuidIsNullOrEmpty())
         {
             AppUserRole userRole = new AppUserRole
@@ -70,7 +74,9 @@ public class EfAuthOperation : IEfAuthOperation
                 return new RegisterResponse { IsSuccess = false };
         }
 
-        return new RegisterResponse { IsSuccess = true };
+        AppUser? insertedUser = await _dynamicBaseQuery.GetByExpressionAsync<AppUser>(c => c.Id == insertUser.id);
+
+        return new RegisterResponse { IsSuccess = true, User = insertedUser };
     }
 
     public async Task<LoginResponse> LogIn(LoginRequest request)
@@ -80,13 +86,19 @@ public class EfAuthOperation : IEfAuthOperation
         if (user is null)
             return new LoginResponse { IsSuccess = false };
 
+        if (user.IsDeleted || user.IsStatus == false)
+            return new LoginResponse() { IsSuccess = false };
+
         List<AppUserRole>? userRole = await _dynamicBaseQuery.GetAllByExpressionAsync<AppUserRole>(c => c.UserId == user.Id);
 
         if (!userRole.Any())
             return new LoginResponse { IsSuccess = false };
 
-        if (!HashingHelper.VerifyPasswordHash(request.Password, user!.PasswordHash, user.PasswordSalt))
-            return new LoginResponse { IsSuccess = false };
+        if (!request.IsGoogleUser)
+        {
+            if (!HashingHelper.VerifyPasswordHash(request.Password, user!.PasswordHash, user.PasswordSalt))
+                return new LoginResponse { IsSuccess = false };
+        }
 
         AccessToken token = _tokenHelper.CreateToken(user, userRole.Select(c => c.RoleId.ToString()).ToList());
 
@@ -95,10 +107,10 @@ public class EfAuthOperation : IEfAuthOperation
 
         await _dynamicBaseCommand.AddWithGuidIdentityAsync(new AppLoginLog
         {
-            Description = $"User [{user.FirstName} {user.LastName}] logged in on [{DateTime.Now:dd/MM/yyyy HH:mm:ss}]"
+            Description = $"User [{user.FirstName} {user.LastName}] logged in on [{DateTime.Now:dd/MM/yyyy HH:mm:ss}] [{user.Id}]"
         });
 
-        return new LoginResponse { IsSuccess = true, AccessToken = token.Token, User = user};
+        return new LoginResponse { IsSuccess = true, AccessToken = token.Token, User = user };
     }
 
     public async Task<(bool isSuccess, string message)> UpdatePassword(UpdatePasswordRequest request)
@@ -127,5 +139,15 @@ public class EfAuthOperation : IEfAuthOperation
             return (false, "");
 
         return (true, "");
+    }
+
+    public bool LoginExists()
+    {
+        return !string.IsNullOrEmpty(_httpContextAccessor.AccessToken().accessToken);
+    }
+
+    public Guid UserId()
+    {
+        return string.IsNullOrEmpty(_httpContextAccessor.AccessToken().userId) ? Guid.Empty : new Guid(_httpContextAccessor.AccessToken().userId);
     }
 }

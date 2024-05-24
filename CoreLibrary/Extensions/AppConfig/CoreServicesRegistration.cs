@@ -1,4 +1,5 @@
 ﻿using CoreLibrary.Aspects.DependencyResolves;
+using CoreLibrary.Utilities.Attribute;
 using CoreLibrary.Utilities.DataAccess.Operation.Dapper.Abstract;
 using CoreLibrary.Utilities.DataAccess.Operation.Dapper.Concrete;
 using CoreLibrary.Utilities.DataAccess.Operation.EntityFramework.Abstract;
@@ -18,7 +19,10 @@ public static class CoreServicesRegistration
 {
     public static void AddCoreServices(this IServiceCollection services)
     {
-        services.AddControllers();
+        services.AddControllers(options =>
+        {
+            options.Filters.Add<AttributeFilter>();
+        });
         
         services.AddEndpointsApiExplorer();
         

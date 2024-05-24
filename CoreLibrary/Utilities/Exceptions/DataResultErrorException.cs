@@ -3,17 +3,21 @@ using CoreLibrary.Utilities.Result;
 
 namespace CoreLibrary.Utilities.Exceptions;
 
-public class DataResultErrorException
+public static class DataResultErrorException
 {
-    private readonly string _errorMessage = string.Empty;
-    
-    public DataResultErrorException(string errorMessage)
-    {
-        _errorMessage = errorMessage;
-    }
+    private static string _message;
 
-    public DataResult Error()
+    // public static DataResult ThrowE()
+    // {
+    //     
+    // }
+    
+}
+
+public class DataResultErrorExceptionMethods
+{
+    public DataResult ThrowError(string message)
     {
-        return new DataResult { ErrorMessageList = new List<string> { _errorMessage } };
+        return new DataResult { ErrorMessageList = new List<string> { message } };
     }
 }
