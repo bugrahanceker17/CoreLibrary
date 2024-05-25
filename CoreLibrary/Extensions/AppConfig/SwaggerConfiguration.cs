@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using System.Reflection;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi.Models;
 
@@ -19,6 +20,8 @@ public static class SwaggerConfiguration
                         swagger.Servers = new List<OpenApiServer> { new() { Url = serverUrl } };
                     }
                 });
+
+                options.RouteTemplate = "swagger/{documentName}/swagger.json";
             })
             .UseSwaggerUI(options =>
             {
@@ -31,7 +34,17 @@ public static class SwaggerConfiguration
     {
         services.AddSwaggerGen(c =>
         {
-            c.SwaggerDoc(version, new OpenApiInfo { Title = assembly, Version = version });
+            c.SwaggerDoc(version, new OpenApiInfo
+            {
+                Title = assembly,
+                Version = version,
+                Description = "POWERED BY BGR",
+                // Contact = new OpenApiContact()
+                // {
+                //     Name = "Bugrahan",
+                //     Url = new Uri("https://github.com/bugrahanceker17")
+                // }
+            });
             c.OperationFilter<SwaggerCultureFilter>();
 
             OpenApiSecurityScheme securityScheme = new OpenApiSecurityScheme
@@ -48,11 +61,16 @@ public static class SwaggerConfiguration
                     Type = ReferenceType.SecurityScheme
                 }
             };
+
             c.AddSecurityDefinition(securityScheme.Reference.Id, securityScheme);
             c.AddSecurityRequirement(new OpenApiSecurityRequirement
             {
                 { securityScheme, Array.Empty<string>() }
             });
+
+            string xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+            string xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+            c.IncludeXmlComments(xmlPath);
         });
     }
 }
