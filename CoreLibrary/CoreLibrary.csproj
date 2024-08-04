@@ -8,9 +8,8 @@
         <PackageId>DevBGRCoreLibrary</PackageId>
         <Authors>DEVBGR</Authors>
         <RepositoryUrl>https://github.com/bugrahanceker17/CoreLibrary</RepositoryUrl>
-        <Version>1.0.31</Version>
-        <GenerateDocumentationFile>true</GenerateDocumentationFile>
-        <NoWarn>$(NoWarn);1591</NoWarn>
+        <Version>1.0.34</Version>
+
     </PropertyGroup>
 
     <ItemGroup>

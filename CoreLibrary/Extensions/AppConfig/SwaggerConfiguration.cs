@@ -68,9 +68,9 @@ public static class SwaggerConfiguration
                 { securityScheme, Array.Empty<string>() }
             });
 
-            string xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-            string xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-            c.IncludeXmlComments(xmlPath);
+            // string xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+            // string xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+            // c.IncludeXmlComments(xmlPath);
         });
     }
 }
