@@ -25,4 +25,5 @@ public class ApplicationDbContext : DbContext
     public DbSet<AppPermission> Permissions { get; set; }
     public DbSet<AppPermissionCorrelation> AppPermissionCorrelations { get; set; }
     public DbSet<AppLoginLog> AppLoginLogs { get; set; }
+    public DbSet<AppLocalizationValue> AppLocalizationValues { get; set; }
 }

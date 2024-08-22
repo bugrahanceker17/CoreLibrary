@@ -1,4 +1,5 @@
 ﻿using CoreLibrary.Utilities.DataAccess.Operation.EntityFramework.Abstract;
+using CoreLibrary.Utilities.Localization;
 using CoreLibrary.Utilities.Result;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,17 +14,21 @@ public abstract class PrincipalService<T> where T: class
     private IEfDynamicBaseQuery _dynamicBaseQuery;
     private static IHttpContextAccessor _httpContextAccessor;
     private IEfAuthOperation _authOperation;
-    private IStringLocalizer _localizer;
+    private ITranslateHelper _translateHelper;
 
-    protected PrincipalService(IServiceProvider serviceProvider, IStringLocalizer<dynamic> localizer)
+    protected PrincipalService(IServiceProvider serviceProvider)
     {
         _serviceProvider = serviceProvider;
-        _localizer = localizer;
     }
 
     protected IEfDynamicBaseCommand DynamicCommand
     {
         get { return _dynamicBaseCommand ??= this._serviceProvider.GetRequiredService<IEfDynamicBaseCommand>(); }
+    }
+    
+    protected ITranslateHelper Translate
+    {
+        get { return _translateHelper ??= this._serviceProvider.GetRequiredService<ITranslateHelper>(); }
     }
 
     protected IEfDynamicBaseQuery DynamicQuery
@@ -42,9 +47,5 @@ public abstract class PrincipalService<T> where T: class
     }
 
     public static DataResult ThrowDataResultError(string message) => new() { ErrorMessageList = new List<string> { message } };
-
-    protected string Translate(string key)
-    {
-        return _localizer[key].Value;
-    }
+    
 }

@@ -5,6 +5,7 @@ using CoreLibrary.Utilities.DataAccess.Operation.Dapper.Concrete;
 using CoreLibrary.Utilities.DataAccess.Operation.EntityFramework.Abstract;
 using CoreLibrary.Utilities.DataAccess.Operation.EntityFramework.Concrete;
 using CoreLibrary.Utilities.IOC;
+using CoreLibrary.Utilities.Localization;
 using CoreLibrary.Utilities.MailSender;
 using CoreLibrary.Utilities.Security.JWT;
 using Microsoft.AspNetCore.Builder;
@@ -53,5 +54,8 @@ public static class CoreServicesRegistration
         services.AddTransient<IDapperAuthOperation, DapperAuthOperation>();
         services.AddTransient<IDapperDynamicBaseCommand, DapperDynamicBaseCommand>();
         services.AddTransient<IDapperDynamicBaseQuery, DapperDynamicBaseQuery>();
+
+        services.AddSingleton<ICultureHelper, CultureHelper>();
+        services.AddSingleton<ITranslateHelper, TranslateHelper>();
     }
 }
