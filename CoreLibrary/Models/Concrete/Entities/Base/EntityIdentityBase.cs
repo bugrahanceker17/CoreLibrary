@@ -1,6 +1,8 @@
-﻿namespace CoreLibrary.Models.Concrete.Entities.Base;
+﻿using CoreLibrary.Models.Abstract;
 
-public class EntityIdentityBase<TIdentityType>
+namespace CoreLibrary.Models.Concrete.Entities.Base;
+
+public class EntityIdentityBase<TIdentityType> : IEntity
 {
     public TIdentityType Id { get; set; }
 }
