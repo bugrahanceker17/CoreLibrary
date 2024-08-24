@@ -1,4 +1,5 @@
 ﻿using CoreLibrary.Models.Concrete.Entities;
+using CoreLibrary.Models.Concrete.Entities.Base;
 using Microsoft.EntityFrameworkCore;
 
 namespace CoreLibrary.Utilities.DataAccess;
@@ -29,6 +30,29 @@ public class ApplicationDbContext : DbContext
         optionsBuilder.EnableSensitiveDataLogging(true);
         optionsBuilder.EnableDetailedErrors();
     }
+    
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        if (_dbType.ToLower() == "postgresql")
+        {
+            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+            {
+                if (typeof(BaseEntity<Guid>).IsAssignableFrom(entityType.ClrType))
+                {
+                    modelBuilder.Entity(entityType.ClrType)
+                        .Property(nameof(BaseEntity<Guid>.Id))
+                        .HasColumnType("uuid");
+                
+                    modelBuilder.HasDefaultSchema("CoreLibraryTest");
+                }
+            }
+        
+            AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
+            base.OnModelCreating(modelBuilder);
+        }
+    }
+
 
     public DbSet<AppUser> AppUsers { get; set; }
     public DbSet<AppRole> AppRoles { get; set; }

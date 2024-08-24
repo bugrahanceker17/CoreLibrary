@@ -25,7 +25,7 @@ public class EfDynamicBaseCommand : IEfDynamicBaseCommand
 
         entity.Id = Guid.NewGuid();
         entity.CreatedBy = string.IsNullOrEmpty(userId) ? null : userId;
-        entity.CreatedAt = DateTime.Now;
+        entity.CreatedAt = DateTimeOffset.Now;
         entity.IsDeleted = false;
         entity.IsStatus = true;
         
@@ -60,7 +60,7 @@ public class EfDynamicBaseCommand : IEfDynamicBaseCommand
     
         if (existingEntity is not null)
         {
-            entity.UpdatedAt = DateTime.Now;
+            entity.UpdatedAt = DateTimeOffset.Now;
             entity.UpdatedBy = string.IsNullOrEmpty(_httpContextAccessor.AccessToken().userId) ? null : _httpContextAccessor.AccessToken().userId;
             
             _context.Entry(existingEntity).CurrentValues.SetValues(entity);
@@ -94,7 +94,7 @@ public class EfDynamicBaseCommand : IEfDynamicBaseCommand
     
         if (existingEntity is not null)
         {
-            entity.UpdatedAt = DateTime.Now;
+            entity.UpdatedAt = DateTimeOffset.Now;
             entity.UpdatedBy = string.IsNullOrEmpty(_httpContextAccessor.AccessToken().userId) ? null : _httpContextAccessor.AccessToken().userId;
             entity.IsDeleted = true;
             entity.IsStatus = false;

@@ -46,7 +46,7 @@ public class DapperAuthOperation : IDapperAuthOperation
             UserName = request.UserName,
             PhoneNumber = request.PhoneNumber,
             PhoneNumberConfirmed = false,
-            CreatedAt = DateTime.Now,
+            CreatedAt = DateTimeOffset.Now,
             IsDeleted = false,
             IsStatus = false,
 
@@ -92,14 +92,14 @@ public class DapperAuthOperation : IDapperAuthOperation
         if (!HashingHelper.VerifyPasswordHash(request.Password, user!.PasswordHash, user.PasswordSalt))
             return new LoginResponse { IsSuccess = false };
         
-        AccessToken token = _tokenHelper.CreateToken(user, userRole.Select(c=>c.RoleId.ToString()).ToList());
+        AccessToken token = _tokenHelper.CreateAccessToken(user, userRole.Select(c=>c.RoleId.ToString()).ToList());
         
         if(string.IsNullOrEmpty(token.Token))
             return new LoginResponse { IsSuccess = false };
 
         await _dynamicBaseCommand.AddWithGuidIdentityAsync(new AppLoginLog
         {
-            Description = $"User [{user.FirstName} {user.LastName}] logged in on [{DateTime.Now:dd/MM/yyyy HH:mm:ss}]"
+            Description = $"User [{user.FirstName} {user.LastName}] logged in on [{DateTimeOffset.Now:dd/MM/yyyy HH:mm:ss}]"
         });
 
         return new LoginResponse { IsSuccess = true, AccessToken = token.Token, User = user};

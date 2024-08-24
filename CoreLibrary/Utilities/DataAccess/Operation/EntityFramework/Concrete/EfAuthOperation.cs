@@ -46,7 +46,7 @@ public class EfAuthOperation : IEfAuthOperation
             UserName = request.UserName,
             PhoneNumber = request.PhoneNumber,
             PhoneNumberConfirmed = false,
-            CreatedAt = DateTime.Now,
+            CreatedAt = DateTimeOffset.Now,
             IsDeleted = false,
             IsStatus = false,
 
@@ -100,17 +100,23 @@ public class EfAuthOperation : IEfAuthOperation
                 return new LoginResponse { IsSuccess = false };
         }
 
-        AccessToken token = _tokenHelper.CreateToken(user, userRole.Select(c => c.RoleId.ToString()).ToList());
+        AccessToken token = _tokenHelper.CreateAccessToken(user, userRole.Select(c => c.RoleId.ToString()).ToList());
 
         if (string.IsNullOrEmpty(token.Token))
             return new LoginResponse { IsSuccess = false };
 
+        user.RefreshTokenHash = token.RefreshToken.TokenHash;
+        user.RefreshTokenSalt = token.RefreshToken.TokenSalt;
+        user.RefreshTokenExpires = token.RefreshToken.Expires;
+
+        await _dynamicBaseCommand.UpdateAsync(user);
+
         await _dynamicBaseCommand.AddWithGuidIdentityAsync(new AppLoginLog
         {
-            Description = $"User [{user.FirstName} {user.LastName}] logged in on [{DateTime.Now:dd/MM/yyyy HH:mm:ss}] [{user.Id}]"
+            Description = $"User [{user.FirstName} {user.LastName}] logged in on [{DateTimeOffset.Now:dd/MM/yyyy HH:mm:ss}] [{user.Id}]"
         });
 
-        return new LoginResponse { IsSuccess = true, AccessToken = token.Token, User = user };
+        return new LoginResponse { IsSuccess = true, AccessToken = token.Token, RefreshToken = token.RefreshToken, User = user };
     }
 
     public async Task<(bool isSuccess, string message)> UpdatePassword(UpdatePasswordRequest request)
@@ -128,7 +134,6 @@ public class EfAuthOperation : IEfAuthOperation
 
         byte[] passwordHash, passwordSalt;
         HashingHelper.CreatePasswordHash(request.NewPassword, out passwordHash, out passwordSalt);
-
 
         appUser.PasswordSalt = passwordSalt;
         appUser.PasswordHash = passwordHash;

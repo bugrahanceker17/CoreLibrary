@@ -1,4 +1,6 @@
-﻿using System.Text;
+﻿using System.Security.Cryptography;
+using System.Text;
+using CoreLibrary.Utilities.Security.JWT;
 
 namespace CoreLibrary.Utilities.Security.Hashing
 {
@@ -28,6 +30,39 @@ namespace CoreLibrary.Utilities.Security.Hashing
                 return true;
             }
 
+        }
+        
+        public static string HashRefreshToken(string refreshToken)
+        {
+            using var sha256 = SHA256.Create();
+            
+            byte[] bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(refreshToken));
+            return Convert.ToBase64String(bytes);
+        }
+        
+        public static string GenerateSalt()
+        {
+            byte[] saltBytes = new byte[16];
+            using (var rng = RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(saltBytes);
+            }
+            return Convert.ToBase64String(saltBytes);
+        }
+        
+        public static bool ValidateRefreshToken(string providedToken, RefreshToken storedToken)
+        {
+            string providedTokenHash = HashWithSalt(providedToken, storedToken.TokenSalt);
+
+            return providedTokenHash == storedToken.TokenHash;
+        }
+
+        public static string HashWithSalt(string refreshToken, string salt)
+        {
+            using var sha256 = SHA256.Create();
+            var saltedToken = refreshToken + salt;
+            var bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(saltedToken));
+            return Convert.ToBase64String(bytes);
         }
     } 
 }

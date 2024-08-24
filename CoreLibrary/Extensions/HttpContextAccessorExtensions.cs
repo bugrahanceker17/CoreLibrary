@@ -83,6 +83,11 @@ namespace CoreLibrary.Extensions
 
             return (accessToken, userId, claims, role, expTimeFormatTimeStamp);
         }
+
+        public static string RefreshToken()
+        {
+            return "";
+        }
     }
 }
 

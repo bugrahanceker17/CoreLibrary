@@ -4,7 +4,8 @@ namespace CoreLibrary.Utilities.Security.JWT
 {
     public interface ITokenHelper
     {
-        AccessToken CreateToken(AppUser user, List<string> roles); 
+        AccessToken CreateAccessToken(AppUser user, List<string> roles);
+        string CreateRefreshToken(string token);
     }
 }
 

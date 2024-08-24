@@ -27,7 +27,7 @@ public class DapperDynamicBaseCommand : IDapperDynamicBaseCommand
         string userId = _httpContextAccessor.AccessToken().userId;
 
         entity.CreatedBy = string.IsNullOrEmpty(userId) ? null : userId;
-        entity.CreatedAt = DateTime.Now;
+        entity.CreatedAt = DateTimeOffset.Now;
         entity.IsDeleted = false;
         entity.IsStatus = true;
 
@@ -56,7 +56,7 @@ public class DapperDynamicBaseCommand : IDapperDynamicBaseCommand
 
     public async Task<int> UpdateAsync<T>(T entity) where T : BaseEntity<Guid>
     {
-        entity.UpdatedAt = DateTime.Now;
+        entity.UpdatedAt = DateTimeOffset.Now;
         entity.UpdatedBy = string.IsNullOrEmpty(_httpContextAccessor.AccessToken().userId) ? null : _httpContextAccessor.AccessToken().userId;
 
         int? result = await db.UpdateAsync(entity);
@@ -78,7 +78,7 @@ public class DapperDynamicBaseCommand : IDapperDynamicBaseCommand
     {
         entity.IsDeleted = true;
         entity.IsStatus = false;
-        entity.UpdatedAt = DateTime.Now;
+        entity.UpdatedAt = DateTimeOffset.Now;
         entity.UpdatedBy = string.IsNullOrEmpty(_httpContextAccessor.AccessToken().userId) ? null : _httpContextAccessor.AccessToken().userId;
 
         int? result = await db.UpdateAsync(entity);
