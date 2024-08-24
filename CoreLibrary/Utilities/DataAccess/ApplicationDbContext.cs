@@ -25,6 +25,10 @@ public class ApplicationDbContext : DbContext
         {
             optionsBuilder.UseNpgsql(_connectionString);
         }
+        else if (_dbType.ToLower() == "mariadb")
+        {
+            optionsBuilder.UseMySql(_connectionString, ServerVersion.AutoDetect(_connectionString));
+        }
        
         optionsBuilder.LogTo(Console.WriteLine);
         optionsBuilder.EnableSensitiveDataLogging(true);
