@@ -65,43 +65,42 @@ public class AttributeFilter : IAuthorizationFilter
                 }
             }
 
-            using (var dbContext = new ApplicationDbContext(_configurationValues.Database.ConnectionString))
+            using var dbContext = new ApplicationDbContext(_configurationValues.Database.ConnectionString, _configurationValues.DbType.Name);
+            
+            if (!string.IsNullOrEmpty(userId))
             {
-                if (!string.IsNullOrEmpty(userId))
-                {
-                    Guid gUserId = new Guid(userId);
+                Guid gUserId = new Guid(userId);
                     
-                    AppUser? userControl = dbContext.AppUsers.FirstOrDefault(c => c.Id == gUserId && c.IsDeleted == false && c.IsStatus == true);
+                AppUser? userControl = dbContext.AppUsers.FirstOrDefault(c => c.Id == gUserId && c.IsDeleted == false && c.IsStatus == true);
                     
-                    if(userControl is null)
-                        context.Result = new ObjectResult("Kullanıcı bulunamadı!") { StatusCode = 401 };
+                if(userControl is null)
+                    context.Result = new ObjectResult("Kullanıcı bulunamadı!") { StatusCode = 401 };
                     
-                }
+            }
 
-                List<string> permissionParams = customAttribute?.Permissions?.ToList();
+            List<string>? permissionParams = customAttribute?.Permissions?.ToList();
 
-                if (permissionParams != null && permissionParams.Any())
+            if (permissionParams != null && permissionParams.Any())
+            {
+                if (roles.Any())
                 {
-                    if (roles.Any())
-                    {
-                        List<Guid> guidRoles = new();
-                        roles.ForEach(item => { guidRoles.Add(new Guid(item)); });
+                    List<Guid> guidRoles = new();
+                    roles.ForEach(item => { guidRoles.Add(new Guid(item)); });
                         
-                        List<AppPermissionCorrelation> rolePermissionRelation = dbContext.AppPermissionCorrelations.ToList()
-                            .Where(c => guidRoles.Contains(c.RoleId) && c is { IsStatus: true, IsDeleted: false }).ToList();
+                    List<AppPermissionCorrelation> rolePermissionRelation = dbContext.AppPermissionCorrelations.ToList()
+                        .Where(c => guidRoles.Contains(c.RoleId) && c is { IsStatus: true, IsDeleted: false }).ToList();
 
-                        List<string> allPermissionInRoles = rolePermissionRelation.Select(c => c.PermissionId.ToString()).ToList();
+                    List<string> allPermissionInRoles = rolePermissionRelation.Select(c => c.PermissionId.ToString()).ToList();
 
-                        IEnumerable<string> permissions = dbContext.Permissions.ToList()
-                            .Where(c => permissionParams.Contains(c.Code.ToString()))
-                            .ToList().Select(c => c.Id.ToString());
+                    IEnumerable<string> permissions = dbContext.Permissions.ToList()
+                        .Where(c => permissionParams.Contains(c.Code.ToString()))
+                        .ToList().Select(c => c.Id.ToString());
 
-                        if (permissions.Any(c => allPermissionInRoles.Contains(c)))
-                            Console.WriteLine("Yetki kontrolü başarılı !");
+                    if (permissions.Any(c => allPermissionInRoles.Contains(c)))
+                        Console.WriteLine("Yetki kontrolü başarılı !");
 
-                        else
-                            context.Result = new ObjectResult("Yetkilendirme başarısız") { StatusCode = 403 };
-                    }
+                    else
+                        context.Result = new ObjectResult("Yetkilendirme başarısız") { StatusCode = 403 };
                 }
             }
         }

@@ -12,4 +12,5 @@ public class ConfigurationValues
     public Storage? Storage { get; set; }
     public TokenOptions? TokenOptions { get; set; }
     public Telegram? Telegram { get; set; }
+    public DbType? DbType { get; set; }
 }

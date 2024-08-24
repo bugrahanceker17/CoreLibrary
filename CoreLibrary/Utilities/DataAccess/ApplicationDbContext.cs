@@ -6,14 +6,25 @@ namespace CoreLibrary.Utilities.DataAccess;
 public class ApplicationDbContext : DbContext
 {
     private readonly string _connectionString;
-    public ApplicationDbContext(string connectionString)
+    private readonly string _dbType;
+    
+    public ApplicationDbContext(string connectionString, string dbType)
     {
         _connectionString = connectionString;
+        _dbType = dbType;
     }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        optionsBuilder.UseSqlServer(_connectionString);
+        if (_dbType.ToLower() == "sqlserver")
+        {
+             optionsBuilder.UseSqlServer(_connectionString);
+        }
+        else if (_dbType.ToLower() == "postgresql")
+        {
+            optionsBuilder.UseNpgsql(_connectionString);
+        }
+       
         optionsBuilder.LogTo(Console.WriteLine);
         optionsBuilder.EnableSensitiveDataLogging(true);
         optionsBuilder.EnableDetailedErrors();
