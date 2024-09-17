@@ -1,6 +1,7 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using CoreLibrary.Utilities.Localization;
+using Microsoft.AspNetCore.Http;
 
-namespace CoreLibrary.Utilities.Localization;
+namespace CoreLibrary.Utilities.Middleware;
 
 public class CultureMiddleware
 {

@@ -1,6 +1,7 @@
 ﻿using CoreLibrary.Models.Concrete.Entities;
 using CoreLibrary.Models.Concrete.Entities.Base;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace CoreLibrary.Utilities.DataAccess;
 
@@ -30,7 +31,11 @@ public class ApplicationDbContext : DbContext
             optionsBuilder.UseMySql(_connectionString, ServerVersion.AutoDetect(_connectionString));
         }
        
-        optionsBuilder.LogTo(Console.WriteLine);
+        optionsBuilder.LogTo(Console.WriteLine, new[] 
+        { 
+            DbLoggerCategory.Database.Command.Name,
+            DbLoggerCategory.Database.Connection.Name
+        }, LogLevel.Information);
         optionsBuilder.EnableSensitiveDataLogging(true);
         optionsBuilder.EnableDetailedErrors();
     }
