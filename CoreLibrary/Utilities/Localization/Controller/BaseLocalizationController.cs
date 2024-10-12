@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace CoreLibrary.Utilities.Localization.Controller;
 
-[Route("api/{culture}/[controller]")]
+[Route("api/[controller]")]
 [ApiController]
 public class BaseLocalizationController : Microsoft.AspNetCore.Mvc.Controller
 {
