@@ -20,6 +20,15 @@ public class CultureMiddleware
         {
             cultureService.SetCurrentCulture(cultureName);
         }
+        else
+        {
+            cultureName = context.Request.Headers.AcceptLanguage[0]?.Split(',')[0];
+            
+            if (!string.IsNullOrEmpty(cultureName))
+            {
+                cultureService.SetCurrentCulture(cultureName);
+            }
+        }
 
         await _next(context);
     }
