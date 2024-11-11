@@ -32,19 +32,18 @@ namespace CoreLibrary.Utilities.Security.JWT
             return new AccessToken
             {
                 Token = token,
-                Expiration = DateTimeOffset.Now.AddMinutes(_tokenOptions.AccessTokenExpiration),
-                RefreshToken = GenerateRefreshToken()
+                Expiration = DateTimeOffset.Now.AddMinutes(_tokenOptions.AccessTokenExpiration)
             };
         }
 
-        public string CreateRefreshToken(string token)
-        {
-            RandomNumberGenerator rng = RandomNumberGenerator.Create();
-            byte[] randomBytes = new byte[32];
-            rng.GetBytes(randomBytes);
-            
-            return Convert.ToBase64String(randomBytes);
-        }
+        // public string CreateRefreshToken(string token)
+        // {
+        //     RandomNumberGenerator rng = RandomNumberGenerator.Create();
+        //     byte[] randomBytes = new byte[32];
+        //     rng.GetBytes(randomBytes);
+        //     
+        //     return Convert.ToBase64String(randomBytes);
+        // }
 
         private JwtSecurityToken CreateJwtSecurityToken(TokenOptions tokenOptions, AppUser appUser, SigningCredentials signingCredentials, List<string> roles)
         {
@@ -66,29 +65,29 @@ namespace CoreLibrary.Utilities.Security.JWT
             
             claims.AddNameIdentifier(appUser.Id.ToString());
 
-            claims.AddUserName(appUser.UserName);
+            claims.AddUserName(appUser.UserName ?? appUser.Email);
             
             claims.AddRoles(roles.ToArray());
             
             return claims;
         }
 
-        private RefreshToken GenerateRefreshToken(int daysValid = 15)
+        private RefreshToken GenerateRefreshToken(int daysValid = 45)
         {
             var refreshToken = new RefreshToken
             {
                 TokenSalt = HashingHelper.GenerateSalt(),
-                Expires = DateTime.UtcNow.AddDays(daysValid)
+                Expires = DateTimeOffset.UtcNow.AddDays(daysValid)
             };
 
-            string token = GenerateSecureToken();
+            string token = GenerateSecureRefreshToken();
             refreshToken.BaseRefreshToken = token;
             refreshToken.TokenHash = HashingHelper.HashWithSalt(token, refreshToken.TokenSalt);
 
             return refreshToken;
         }
         
-        private string GenerateSecureToken()
+        private static string GenerateSecureRefreshToken()
         {
             byte[] randomBytes = new byte[32];
             using (var rng = RandomNumberGenerator.Create())
@@ -98,15 +97,23 @@ namespace CoreLibrary.Utilities.Security.JWT
             return Convert.ToBase64String(randomBytes);
         }
         
-        public async Task<AppUser> RenewRefreshTokenAsync(AppUser user)
+        public RefreshToken CreateRefreshToken(int daysValid = 45)
         {
-            var refToken = GenerateRefreshToken();
-            
-            user.RefreshTokenExpires = refToken.Expires;
-            user.RefreshTokenHash = refToken.TokenHash;
-            user.RefreshTokenSalt = refToken.TokenSalt;
+            var rawToken = GenerateSecureRefreshToken();
 
-            return user;
+            // Salt oluştur
+            var salt = HashingHelper.GenerateSalt();
+
+            // Token'ı hashle
+            string tokenHash = HashingHelper.HashWithSalt(rawToken, salt);
+
+            return new RefreshToken
+            {
+                TokenSalt = salt,
+                TokenHash = tokenHash,
+                BaseRefreshToken = rawToken,
+                Expires = DateTimeOffset.UtcNow.AddDays(daysValid)
+            };
         }
     }
 }

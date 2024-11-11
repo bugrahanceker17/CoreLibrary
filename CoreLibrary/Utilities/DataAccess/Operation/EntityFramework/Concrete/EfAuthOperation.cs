@@ -26,9 +26,9 @@ public class EfAuthOperation : IEfAuthOperation
     public async Task<RegisterResponse> Register(RegisterRequest request)
     {
         AppUser? userExists = await _dynamicBaseQuery.GetByExpressionAsync<AppUser>(c =>
-            c.UserName == request.UserName ||
             c.Email == request.Email ||
-            c.PhoneNumber == request.PhoneNumber
+            (!string.IsNullOrEmpty(request.UserName) && c.UserName == request.UserName) ||
+            (!string.IsNullOrEmpty(request.PhoneNumber) && c.PhoneNumber == request.PhoneNumber)
         );
 
         if (userExists is not null && userExists.Id != Guid.Empty)
@@ -104,19 +104,13 @@ public class EfAuthOperation : IEfAuthOperation
 
         if (string.IsNullOrEmpty(token.Token))
             return new LoginResponse { IsSuccess = false };
-
-        user.RefreshTokenHash = token.RefreshToken.TokenHash;
-        user.RefreshTokenSalt = token.RefreshToken.TokenSalt;
-        user.RefreshTokenExpires = token.RefreshToken.Expires;
-
-        await _dynamicBaseCommand.UpdateAsync(user);
-
+        
         await _dynamicBaseCommand.AddWithGuidIdentityAsync(new AppLoginLog
         {
             Description = $"User [{user.FirstName} {user.LastName}] logged in on [{DateTimeOffset.Now:dd/MM/yyyy HH:mm:ss}] [{user.Id}]"
         });
 
-        return new LoginResponse { IsSuccess = true, AccessToken = token.Token, RefreshToken = token.RefreshToken, User = user };
+        return new LoginResponse { IsSuccess = true, AccessToken = token.Token, User = user };
     }
 
     public async Task<(bool isSuccess, string message)> UpdatePassword(UpdatePasswordRequest request)

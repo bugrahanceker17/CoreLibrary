@@ -18,9 +18,9 @@ public class AppUser : BaseEntity<Guid>, IEntity
     [StringLength(100)] public string? UserName { get; set; }
     public byte[]? PasswordHash { get; set; }
     public byte[]? PasswordSalt { get; set; }
-    public string RefreshTokenHash { get; set; }
-    public string RefreshTokenSalt { get; set; }
-    public DateTime? RefreshTokenExpires { get; set; }
+    public string? RefreshTokenHash { get; set; }
+    public string? RefreshTokenSalt { get; set; }
+    public DateTimeOffset? RefreshTokenExpires { get; set; }
     public bool? LockoutEnabled { get; set; }
-    public DateTime? LockoutEnd { get; set; }
+    public DateTimeOffset? LockoutEnd { get; set; }
 }

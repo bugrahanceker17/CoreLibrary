@@ -1,4 +1,6 @@
-﻿namespace CoreLibrary.Extensions;
+﻿using System.Text;
+
+namespace CoreLibrary.Extensions;
 
 public static class SystemExceptions
 {
@@ -39,5 +41,44 @@ public static class SystemExceptions
         }
 
         return data.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+    }
+    
+    public static string ConvertTurkishCharsToEnglish(this string input, bool toLowerCase = true)
+    {
+        StringBuilder sb = new StringBuilder(input);
+
+        if (toLowerCase)
+        {
+            sb.Replace("Ç", "c");
+            sb.Replace("ç", "c");
+            sb.Replace("Ğ", "g");
+            sb.Replace("ğ", "g");
+            sb.Replace("İ", "i");
+            sb.Replace("ı", "i");
+            sb.Replace("Ö", "o");
+            sb.Replace("ö", "o");
+            sb.Replace("Ş", "s");
+            sb.Replace("ş", "s");
+            sb.Replace("Ü", "u");
+            sb.Replace("ü", "u");
+        }
+        else
+        {
+            sb.Replace("Ç", "C");
+            sb.Replace("ç", "c");
+            sb.Replace("Ğ", "G");
+            sb.Replace("ğ", "g");
+            sb.Replace("İ", "I");
+            sb.Replace("ı", "i");
+            sb.Replace("Ö", "O");
+            sb.Replace("ö", "o");
+            sb.Replace("Ş", "S");
+            sb.Replace("ş", "s");
+            sb.Replace("Ü", "U");
+            sb.Replace("ü", "u");
+        }
+       
+
+        return sb.ToString();
     }
 }
