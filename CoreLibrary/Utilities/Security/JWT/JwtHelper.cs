@@ -2,6 +2,7 @@
 using System.Security.Cryptography;
 using CoreLibrary.Models.Concrete.Entities;
 using CoreLibrary.Models.Setting;
+using CoreLibrary.Utilities.DataAccess.Operation.EntityFramework.Abstract;
 using CoreLibrary.Utilities.Security.Claim;
 using CoreLibrary.Utilities.Security.Encryption;
 using CoreLibrary.Utilities.Security.Hashing;
@@ -14,9 +15,11 @@ namespace CoreLibrary.Utilities.Security.JWT
     {
         private readonly ConfigurationValues _configurationValues;
         private readonly TokenOptions _tokenOptions;
+        private readonly IEfDynamicBaseQuery _efDynamicBaseQuery;
 
-        public JwtHelper(IOptions<ConfigurationValues> configurationValues)
+        public JwtHelper(IOptions<ConfigurationValues> configurationValues, IEfDynamicBaseQuery efDynamicBaseQuery)
         {
+            _efDynamicBaseQuery = efDynamicBaseQuery;
             _configurationValues = configurationValues.Value;
             _tokenOptions = _configurationValues.TokenOptions;
         }
@@ -29,28 +32,27 @@ namespace CoreLibrary.Utilities.Security.JWT
             JwtSecurityTokenHandler jwtSecurityTokenHandler = new JwtSecurityTokenHandler();
             string token = jwtSecurityTokenHandler.WriteToken(jwt);
 
+            var sharedData = _efDynamicBaseQuery.GetByExpressionAsync<AppSharedSetting>(c => c.Type == 1 && c.IsDeleted == false && c.IsStatus).Result;
+
+            int expirationValue = sharedData != null ? Convert.ToInt32(sharedData.ExtraValue) : _tokenOptions.AccessTokenExpiration;
+
             return new AccessToken
             {
                 Token = token,
-                Expiration = DateTimeOffset.Now.AddMinutes(_tokenOptions.AccessTokenExpiration)
+                Expiration = DateTimeOffset.Now.AddMinutes(expirationValue)
             };
         }
 
-        // public string CreateRefreshToken(string token)
-        // {
-        //     RandomNumberGenerator rng = RandomNumberGenerator.Create();
-        //     byte[] randomBytes = new byte[32];
-        //     rng.GetBytes(randomBytes);
-        //     
-        //     return Convert.ToBase64String(randomBytes);
-        // }
-
         private JwtSecurityToken CreateJwtSecurityToken(TokenOptions tokenOptions, AppUser appUser, SigningCredentials signingCredentials, List<string> roles)
         {
+            var sharedData = _efDynamicBaseQuery.GetByExpressionAsync<AppSharedSetting>(c => c.Type == 1 && c.IsDeleted == false && c.IsStatus).Result;
+
+            int expirationValue = sharedData != null ? Convert.ToInt32(sharedData.ExtraValue) : _tokenOptions.AccessTokenExpiration;
+            
             JwtSecurityToken jwt = new JwtSecurityToken(
                 issuer: tokenOptions.Issuer,
                 audience: tokenOptions.Audience,
-                expires: DateTimeOffset.Now.LocalDateTime.AddMinutes(_tokenOptions.AccessTokenExpiration),
+                expires: DateTimeOffset.Now.LocalDateTime.AddMinutes(expirationValue),
                 notBefore: DateTimeOffset.Now.LocalDateTime,
                 claims: SetClaims(appUser, roles),
                 signingCredentials: signingCredentials
@@ -71,21 +73,6 @@ namespace CoreLibrary.Utilities.Security.JWT
             
             return claims;
         }
-
-        private RefreshToken GenerateRefreshToken(int daysValid = 45)
-        {
-            var refreshToken = new RefreshToken
-            {
-                TokenSalt = HashingHelper.GenerateSalt(),
-                Expires = DateTimeOffset.UtcNow.AddDays(daysValid)
-            };
-
-            string token = GenerateSecureRefreshToken();
-            refreshToken.BaseRefreshToken = token;
-            refreshToken.TokenHash = HashingHelper.HashWithSalt(token, refreshToken.TokenSalt);
-
-            return refreshToken;
-        }
         
         private static string GenerateSecureRefreshToken()
         {
@@ -101,10 +88,8 @@ namespace CoreLibrary.Utilities.Security.JWT
         {
             var rawToken = GenerateSecureRefreshToken();
 
-            // Salt oluştur
             var salt = HashingHelper.GenerateSalt();
 
-            // Token'ı hashle
             string tokenHash = HashingHelper.HashWithSalt(rawToken, salt);
 
             return new RefreshToken
