@@ -28,6 +28,11 @@ public class EfDynamicBaseQuery : IEfDynamicBaseQuery
 
     public async Task<T?> GetByExpressionAsync<T>(Expression<Func<T, bool>> propertyExpression) where T : class
     {
+        return await _context.Set<T>().SingleOrDefaultAsync(propertyExpression);
+    }
+
+    public async Task<T?> GetByExpressionAsyncAsNoTracking<T>(Expression<Func<T, bool>> propertyExpression) where T : class
+    {
         return await _context.Set<T>().AsNoTracking().SingleOrDefaultAsync(propertyExpression);
     }
 

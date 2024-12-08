@@ -84,7 +84,7 @@ namespace CoreLibrary.Utilities.Security.JWT
             return Convert.ToBase64String(randomBytes);
         }
         
-        public RefreshToken CreateRefreshToken(int daysValid = 45)
+        public RefreshToken CreateRefreshToken(int minutesValid = 45)
         {
             var rawToken = GenerateSecureRefreshToken();
 
@@ -97,7 +97,7 @@ namespace CoreLibrary.Utilities.Security.JWT
                 TokenSalt = salt,
                 TokenHash = tokenHash,
                 BaseRefreshToken = rawToken,
-                Expires = DateTimeOffset.UtcNow.AddDays(daysValid)
+                Expires = DateTimeOffset.UtcNow.AddMinutes(minutesValid)
             };
         }
     }

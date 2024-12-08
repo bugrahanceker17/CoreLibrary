@@ -30,7 +30,13 @@ public class DapperDynamicBaseQuery : IDapperDynamicBaseQuery
     
     async Task<T> IDynamicBaseQuery.GetByExpressionAsync<T>(Expression<Func<T, bool>> propertyExpression) where T : class
     {
-        T? item = (await db.GetListAsync<T>()).ToList().Where(propertyExpression.Compile()).FirstOrDefault();
+        T? item = (await db.GetListAsync<T>()).ToList().Where(propertyExpression.Compile()).SingleOrDefault();
+        return item;
+    }
+
+    public async Task<T?> GetByExpressionAsyncAsNoTracking<T>(Expression<Func<T, bool>> propertyExpression) where T : class
+    {
+        T? item = (await db.GetListAsync<T>()).ToList().Where(propertyExpression.Compile()).SingleOrDefault();
         return item;
     }
 
